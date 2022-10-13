@@ -44,24 +44,32 @@ fn set_aws_profile_when_needed(args: &Args) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_cmd::cargo::CargoError;
     use assert_cmd::prelude::*;
-    use std::process::Command;
-    use predicates::prelude::*;
     use datafusion::common::DataFusionError;
+    use predicates::prelude::*;
+    use std::process::Command;
+
+    fn map_cargo_to_datafusion_error(e: CargoError) -> DataFusionError {
+        DataFusionError::External(Box::new(e))
+    }
+
+    fn get_qv_cmd() -> Result<Command> {
+        Command::cargo_bin("qv").map_err(map_cargo_to_datafusion_error)
+    }
 
     #[tokio::test]
     async fn run_without_file_exits_with_usage() -> Result<()> {
-        let mut cmd = Command::cargo_bin("qv")
-            .map_err(|e| DataFusionError::External(Box::new(e)))?;
-        cmd.assert().failure().stderr(predicate::str::contains("Usage: qv <PATH>"));
+        let mut cmd = get_qv_cmd()?;
+        cmd.assert()
+            .failure()
+            .stderr(predicate::str::contains("Usage: qv <PATH>"));
         Ok(())
     }
 
     #[tokio::test]
     async fn run_with_local_avro_file() -> Result<()> {
-        let mut cmd = Command::cargo_bin("qv")
-            .map_err(|e| DataFusionError::External(Box::new(e)))?;
-        //let cmd = cmd.arg("/Users/timvw/src/github/qv/testing/data/avro/alltypes_plain.avro");
+        let mut cmd = get_qv_cmd()?;
         let cmd = cmd.arg("./testing/data/avro/alltypes_plain.avro");
         cmd.assert().success()
             .stdout(predicate::str::contains("| id | bool_col | tinyint_col | smallint_col | int_col | bigint_col | float_col | double_col | date_string_col  | string_col | timestamp_col       |"))
