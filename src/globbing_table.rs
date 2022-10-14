@@ -7,8 +7,8 @@ use datafusion::datasource::object_store::ObjectStoreUrl;
 use datafusion::datasource::TableProvider;
 use datafusion::error::DataFusionError;
 use datafusion::prelude::SessionContext;
-use deltalake::storage::DeltaObjectStore;
-use deltalake::{DeltaTable, DeltaTableConfig, StorageUrl};
+//use deltalake::storage::DeltaObjectStore;
+//use deltalake::{DeltaTable, DeltaTableConfig, StorageUrl};
 use object_store::path::Path;
 use object_store::ObjectMeta;
 use std::sync::Arc;
@@ -25,13 +25,15 @@ pub async fn build_table_provider(
     let store = globbing_path.get_store(ctx)?;
     let table_arc: Arc<dyn TableProvider> =
         if has_delta_log_folder(store, &globbing_path.prefix).await? {
+            /*
             let delta_table = load_delta_table(
                 ctx,
                 &globbing_path.object_store_url,
                 &globbing_path.prefix,
                 maybe_at,
             )
-            .await?;
+            .await?;*/
+            let delta_table = load_listing_table(ctx, globbing_path).await?;
             Arc::new(delta_table)
         } else {
             let listing_table = load_listing_table(ctx, globbing_path).await?;
@@ -78,7 +80,7 @@ async fn list_matching_table_urls(
 
     Ok(matching_listing_table_urls)
 }
-
+/*
 async fn load_delta_table(
     ctx: &SessionContext,
     object_store_url: &ObjectStoreUrl,
@@ -98,4 +100,4 @@ async fn load_delta_table(
     delta_table_load_result
         .map(|_| delta_table)
         .map_err(|dte| DataFusionError::External(Box::new(dte)))
-}
+}*/

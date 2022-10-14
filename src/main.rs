@@ -76,4 +76,22 @@ mod tests {
             .stdout(predicate::str::contains("| 4  | true     | 0           | 0            | 0       | 0          | 0         | 0          | 30332f30312f3039 | 30         | 2009-03-01 00:00:00 |"));
         Ok(())
     }
+
+    /*
+    docker run --rm -d -p 9000:9000 --name minio \
+                     -e "MINIO_ACCESS_KEY=minioadmin" \
+                     -e "MINIO_SECRET_KEY=minioadmin" \
+                     -v $(pwd)/testing:/data \
+                     minio/minio server /data
+     */
+
+    #[tokio::test]
+    async fn run_with_s3_avro_file() -> Result<()> {
+        let mut cmd = get_qv_cmd()?;
+        let cmd = cmd.arg("s3://data/avro/alltypes_plain.avro");
+        cmd.assert().success()
+            .stdout(predicate::str::contains("| id | bool_col | tinyint_col | smallint_col | int_col | bigint_col | float_col | double_col | date_string_col  | string_col | timestamp_col       |"))
+            .stdout(predicate::str::contains("| 4  | true     | 0           | 0            | 0       | 0          | 0         | 0          | 30332f30312f3039 | 30         | 2009-03-01 00:00:00 |"));
+        Ok(())
+    }
 }

@@ -73,6 +73,11 @@ async fn build_s3_from_sdk_config(bucket_name: &str, sdk_config: &SdkConfig) -> 
         .with_access_key_id(credentials.access_key_id())
         .with_secret_access_key(credentials.secret_access_key());
 
+    let s3_builder = match env::var("AWS_ENDPOINT_URL") {
+        Ok(aws_endpoint_url) => s3_builder.with_endpoint(aws_endpoint_url),
+        Err(_) => s3_builder
+    };
+
     let s3 = match credentials.session_token() {
         Some(session_token) => s3_builder.with_token(session_token),
         None => s3_builder,
